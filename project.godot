@@ -25,6 +25,10 @@ window/vsync/vsync_mode=0
 
 naming/default_signal_callback_name="_on_{node_Name}{Signal_name}"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/godot_super-wakatime/plugin.cfg")
+
 [input]
 
 left={

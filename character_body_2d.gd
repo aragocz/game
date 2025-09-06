@@ -5,11 +5,12 @@ extends CharacterBody2D;
 var slowed:bool = false;
 var falling:bool = false;
 var recovering_timeslow:bool = false;
-var timeslow_timer:Node = null; #node
-var timeslow_recovery_timer:Node = null; #node
+var timeslow_timer:Timer = null; #node
+var timeslow_recovery_timer:Timer = null; #node
 var timeslow:float = 5; #seconds
 var timeslow_left:float = 5; # seconds
 var timeslow_recovery_modifier:float = 1; #slowed seconds recovered per second
+var projection:Sprite2D = null; #projection during dash
 signal timeslow_tick(percentage_left:float, recovering:bool);
 
 func _ready() -> void:
@@ -29,12 +30,12 @@ func _physics_process(delta: float) -> void:
 	#endif
 	if is_on_floor():
 		
-		if (Input.is_action_pressed("down") or Input.is_action_pressed("left") or Input.is_action_pressed("right")) and not Input.is_action_pressed("slide"):
+		if (Input.is_action_pressed("down") or Input.is_action_pressed("left") or Input.is_action_pressed("right")) and not Input.is_action_pressed("slide") and not slowed:
 			velocity = clamp(velocity + Input.get_vector("left", "right", "dev_null", "down") * speed * delta, Vector2(-5000,-5000), Vector2(5000, 5000));
 		if not(Input.is_action_pressed("down") or Input.is_action_pressed("left") or Input.is_action_pressed("right") or Input.is_action_pressed("slide")):
 			velocity *= 0.85;
 			
-		if Input.is_action_just_pressed("up"):
+		if Input.is_action_just_pressed("up") and not slowed:
 			velocity.y -= jump;
 		move_and_slide();
 		#endif
@@ -42,16 +43,23 @@ func _physics_process(delta: float) -> void:
 #endfunc
 
 func _process(_delta: float) -> void:
+	#Time slow + dash
 	if Input.is_action_just_pressed("slow") and timeslow_left > 1:
 		timeslow_timer.set_paused(false);
 		slowed = true;
 		Engine.time_scale = 0.2;
+		projection = Sprite2D.new();
+		projection.texture = load("res://icon.svg");
+		projection.scale = self.get_node("CharSprite").scale;
+		self.add_child(projection);
 	#endif
 	if Input.is_action_just_released("slow"):
-		normalSpeed()
+		if is_instance_valid(projection): self.global_position = projection.global_position;
+		normalSpeed();
 	#endif
 	if slowed:
 		emit_signal("timeslow_tick", (timeslow_timer.get_time_left()/timeslow)*100);
+		projection.position = radialPosition(self.get_local_mouse_position(), 100);
 		#endif
 	#endif
 	
@@ -83,7 +91,17 @@ func normalSpeed() -> void:
 	Engine.time_scale = 1;
 	timeslow_left = timeslow_timer.get_time_left();
 	timeslow_timer.set_paused(true);
+	if is_instance_valid(projection): projection.queue_free();
 
 func _on_timeslowRecovery() -> void:
 	timeslow_left = clamp(timeslow_left + timeslow_recovery_modifier, 0, timeslow);
 	timeslow_timer.start(timeslow_left);
+
+func componentClamp(vector:Vector2, minV:Vector2, maxV:Vector2) -> Vector2:
+	return Vector2(clamp(vector.x, minV.x, maxV.x), clamp(vector.y, minV.y, maxV.y));
+
+func radialPosition(vector:Vector2, radius:float) -> Vector2:
+	var partX = radius*(vector.x/(abs(vector.x)+abs(vector.y)));
+	var partY = radius*(vector.y/(abs(vector.x)+abs(vector.y)));
+	print(abs(partX)+abs(partY))
+	return Vector2(partX, partY)
