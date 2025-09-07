@@ -33,12 +33,10 @@ safe_margin = 0.3
 script = ExtResource("2_8uh7m")
 
 [node name="CharSprite" type="Sprite2D" parent="CharacterBody2D"]
-position = Vector2(1.90735e-06, 0.999998)
 scale = Vector2(0.15625, 0.21875)
 texture = ExtResource("1_37kl0")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="CharacterBody2D"]
-position = Vector2(0, 1)
 shape = SubResource("RectangleShape2D_6uqi0")
 
 [node name="timeslowTimer" type="Timer" parent="CharacterBody2D"]

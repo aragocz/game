@@ -13,6 +13,8 @@ var timeslow_recovery_modifier:float = 1; #slowed seconds recovered per second
 var projection:Sprite2D = null; #projection during dash
 signal timeslow_tick(percentage_left:float, recovering:bool);
 
+var tempimg:Sprite2D = null;
+
 func _ready() -> void:
 	timeslow_timer = get_node("timeslowTimer");
 	timeslow_recovery_timer = get_node("timeslowRecovery");
@@ -40,6 +42,10 @@ func _physics_process(delta: float) -> void:
 		move_and_slide();
 		#endif
 	#endif
+	
+	if slowed:
+		projection.position = radialPosition(self.get_global_mouse_position(), 100, self.position);
+	#endif
 #endfunc
 
 func _process(_delta: float) -> void:
@@ -59,7 +65,6 @@ func _process(_delta: float) -> void:
 	#endif
 	if slowed:
 		emit_signal("timeslow_tick", (timeslow_timer.get_time_left()/timeslow)*100);
-		projection.position = radialPosition(self.get_local_mouse_position(), 100);
 		#endif
 	#endif
 	
@@ -100,8 +105,5 @@ func _on_timeslowRecovery() -> void:
 func componentClamp(vector:Vector2, minV:Vector2, maxV:Vector2) -> Vector2:
 	return Vector2(clamp(vector.x, minV.x, maxV.x), clamp(vector.y, minV.y, maxV.y));
 
-func radialPosition(vector:Vector2, radius:float) -> Vector2:
-	var partX = radius*(vector.x/(abs(vector.x)+abs(vector.y)));
-	var partY = radius*(vector.y/(abs(vector.x)+abs(vector.y)));
-	print(abs(partX)+abs(partY))
-	return Vector2(partX, partY)
+func radialPosition(vector:Vector2, radius:float, origin:Vector2) -> Vector2:
+	return (vector-origin).normalized()*radius;
