@@ -1,7 +1,7 @@
 extends CharacterBody2D;
-@export var gravity:int = 200; #p/s^2
 @export var speed:int = 750; #p/s^2
 @export var jump:int = 200; #p
+@export var dash_radius:int = 700; #p
 var slowed:bool = false;
 var falling:bool = false;
 var recovering_timeslow:bool = false;
@@ -13,8 +13,6 @@ var timeslow_recovery_modifier:float = 1; #slowed seconds recovered per second
 var projection:Sprite2D = null; #projection during dash
 signal timeslow_tick(percentage_left:float, recovering:bool);
 
-var tempimg:Sprite2D = null;
-
 func _ready() -> void:
 	timeslow_timer = get_node("timeslowTimer");
 	timeslow_recovery_timer = get_node("timeslowRecovery");
@@ -23,7 +21,7 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	if not is_on_floor():
-		velocity += Vector2(0, gravity*delta);
+		velocity += get_gravity()*delta;
 		move_and_slide();
 		
 		if not slowed:
@@ -42,9 +40,22 @@ func _physics_process(delta: float) -> void:
 		move_and_slide();
 		#endif
 	#endif
-	
+
 	if slowed:
-		projection.position = radialPosition(self.get_global_mouse_position(), 100, self.position);
+		var spacestate = get_world_2d().direct_space_state;
+		var ray = PhysicsRayQueryParameters2D.create(self.global_position, DisplayServer.mouse_get_position());
+		ray.exclude = [self];
+		var intersect = spacestate.intersect_ray(ray);
+		if(intersect.is_empty() or (self.position.distance_to(intersect.position) > dash_radius)):
+			projection.position = radialPosition(DisplayServer.mouse_get_position(), dash_radius, self.position);
+		elif(self.position.distance_to(intersect.position) <= dash_radius):
+			projection.position = to_local(intersect.position)
+			print("----")
+			print(self.position)
+			print(intersect.position)
+			print(self.position.distance_to(intersect.position))
+			#intersect.normal
+		#endif
 	#endif
 #endfunc
 
@@ -56,7 +67,6 @@ func _process(_delta: float) -> void:
 		Engine.time_scale = 0.2;
 		projection = Sprite2D.new();
 		projection.texture = load("res://icon.svg");
-		projection.scale = self.get_node("CharSprite").scale;
 		self.add_child(projection);
 	#endif
 	if Input.is_action_just_released("slow"):
@@ -65,7 +75,7 @@ func _process(_delta: float) -> void:
 	#endif
 	if slowed:
 		emit_signal("timeslow_tick", (timeslow_timer.get_time_left()/timeslow)*100);
-		#endif
+		
 	#endif
 	
 	if (is_on_floor() and timeslow_left < timeslow and not slowed):
@@ -84,7 +94,6 @@ func _process(_delta: float) -> void:
 	if Input.is_action_just_pressed("debug_restart"):
 		velocity = Vector2(0,0);
 		position = Vector2(575, 306);
-
 
 func _on_timeslowTimeout() -> void:
 	Input.action_release("slow");
@@ -107,3 +116,12 @@ func componentClamp(vector:Vector2, minV:Vector2, maxV:Vector2) -> Vector2:
 
 func radialPosition(vector:Vector2, radius:float, origin:Vector2) -> Vector2:
 	return (vector-origin).normalized()*radius;
+
+func getPlatformGlobalBoundaries(platformArea:Area2D) -> Dictionary[String, Vector2]:
+	var parentScale:Vector2 = platformArea.get_node("..").scale
+	return {"start": platformArea.get_node("..").position + platformArea.get_node("CollisionShape2D").shape.get_rect().position*parentScale,
+	"end": platformArea.get_node("..").position + platformArea.get_node("CollisionShape2D").shape.get_rect().end*parentScale}
+
+func minPreserveSign(args:Array[int]) -> int:
+	var absd = args.map(func(i): return abs(i))
+	return args[absd.find(absd.min())]

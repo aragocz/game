@@ -1,43 +1,42 @@
 [gd_scene load_steps=7 format=3 uid="uid://5vaxp8f2v58"]
 
 [ext_resource type="Texture2D" uid="uid://r2miduqpobqa" path="res://icon.svg" id="1_37kl0"]
-[ext_resource type="Script" uid="uid://g6ansirxuk2" path="res://main.gd" id="1_ppyta"]
-[ext_resource type="Script" uid="uid://dth768skbff1a" path="res://character_body_2d.gd" id="2_8uh7m"]
+[ext_resource type="Script" uid="uid://g6ansirxuk2" path="res://root.gd" id="1_ppyta"]
+[ext_resource type="Script" uid="uid://dth768skbff1a" path="res://player.gd" id="2_8uh7m"]
 [ext_resource type="PackedScene" uid="uid://dcptlsjjhh678" path="res://HUD.tscn" id="3_6uqi0"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_8uh7m"]
 size = Vector2(128, 128)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_6uqi0"]
-size = Vector2(20, 28)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ykrsh"]
+size = Vector2(128.205, 127.854)
 
 [node name="Node" type="Node"]
 script = ExtResource("1_ppyta")
 
 [node name="StaticBody2D" type="StaticBody2D" parent="."]
 position = Vector2(965, 610)
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
-scale = Vector2(3.80001, 1)
-shape = SubResource("RectangleShape2D_8uh7m")
+scale = Vector2(3.8, 1)
 
 [node name="Sprite2D" type="Sprite2D" parent="StaticBody2D"]
 position = Vector2(-2.70605e-05, 0)
-scale = Vector2(3.80001, 1)
 texture = ExtResource("1_37kl0")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
+shape = SubResource("RectangleShape2D_8uh7m")
 
 [node name="CharacterBody2D" type="CharacterBody2D" parent="."]
 position = Vector2(965, 513)
+scale = Vector2(0.156, 0.219)
 floor_constant_speed = true
 safe_margin = 0.3
 script = ExtResource("2_8uh7m")
 
 [node name="CharSprite" type="Sprite2D" parent="CharacterBody2D"]
-scale = Vector2(0.15625, 0.21875)
 texture = ExtResource("1_37kl0")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="CharacterBody2D"]
-shape = SubResource("RectangleShape2D_6uqi0")
+[node name="CharCollider" type="CollisionShape2D" parent="CharacterBody2D"]
+shape = SubResource("RectangleShape2D_ykrsh")
 
 [node name="timeslowTimer" type="Timer" parent="CharacterBody2D"]
 wait_time = 5.0
