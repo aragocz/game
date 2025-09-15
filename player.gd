@@ -1,7 +1,7 @@
 extends CharacterBody2D;
 @export var speed:int = 750; #p/s^2
 @export var jump:int = 200; #p
-@export var dash_radius:int = 700; #p
+@export var dash_radius:int = 125; #p
 var slowed:bool = false;
 var falling:bool = false;
 var recovering_timeslow:bool = false;
@@ -44,17 +44,12 @@ func _physics_process(delta: float) -> void:
 	if slowed:
 		var spacestate = get_world_2d().direct_space_state;
 		var ray = PhysicsRayQueryParameters2D.create(self.global_position, DisplayServer.mouse_get_position());
-		ray.exclude = [self];
+		ray.exclude = [self, projection];
 		var intersect = spacestate.intersect_ray(ray);
 		if(intersect.is_empty() or (self.position.distance_to(intersect.position) > dash_radius)):
-			projection.position = radialPosition(DisplayServer.mouse_get_position(), dash_radius, self.position);
+			projection.position = to_local(radialPosition(DisplayServer.mouse_get_position(), dash_radius, self.position));
 		elif(self.position.distance_to(intersect.position) <= dash_radius):
-			projection.position = to_local(intersect.position)
-			print("----")
-			print(self.position)
-			print(intersect.position)
-			print(self.position.distance_to(intersect.position))
-			#intersect.normal
+			projection.position = to_local(intersect.position);
 		#endif
 	#endif
 #endfunc
@@ -115,7 +110,7 @@ func componentClamp(vector:Vector2, minV:Vector2, maxV:Vector2) -> Vector2:
 	return Vector2(clamp(vector.x, minV.x, maxV.x), clamp(vector.y, minV.y, maxV.y));
 
 func radialPosition(vector:Vector2, radius:float, origin:Vector2) -> Vector2:
-	return (vector-origin).normalized()*radius;
+	return origin + Vector2.from_angle(origin.angle_to_point(vector))*radius
 
 func getPlatformGlobalBoundaries(platformArea:Area2D) -> Dictionary[String, Vector2]:
 	var parentScale:Vector2 = platformArea.get_node("..").scale
