@@ -61,7 +61,7 @@ func _process(_delta: float) -> void:
 		slowed = true;
 		Engine.time_scale = 0.2;
 		projection = Sprite2D.new();
-		projection.texture = load("res://icon.svg");
+		projection.texture = load("res://src/icon.svg");
 		self.add_child(projection);
 	#endif
 	if Input.is_action_just_released("slow"):
